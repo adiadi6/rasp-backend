@@ -1,0 +1,36 @@
+server:
+  port: 8082
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: spring-backend
+            client-secret: "RWZ07XimADvajYWWCXu84Utu65uCkQaE"
+            authorization-grant-type: authorization_code
+            scope: openid, profile, email
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8080/realms/demo-realm
+            authorization-uri: http://localhost:8080/realms/demo-realm/protocol/openid-connect/auth
+            token-uri: http://localhost:8080/realms/demo-realm/protocol/openid-connect/token
+            user-info-uri: http://localhost:8080/realms/demo-realm/protocol/openid-connect/userinfo
+            jwk-set-uri: http://localhost:8080/realms/demo-realm/protocol/openid-connect/certs
+
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8080/realms/demo-realm
+
+jwt:
+  auth:
+    converter:
+      resource-id: spring-backend
+      principle-attribute: preferred_username
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security.oauth2: TRACE
