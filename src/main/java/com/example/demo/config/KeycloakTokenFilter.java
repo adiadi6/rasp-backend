@@ -50,6 +50,7 @@ public class KeycloakTokenFilter extends OncePerRequestFilter {
             String refreshToken = extractRefreshToken(request);
             if(!isTokenValid(refreshToken)) {
                 System.out.println("refresh token also not valid now");
+                response.sendError(HttpServletResponse.SC_FORBIDDEN,"Refresh token not valid, login karlo");
                 return;
             }
             if (refreshToken != null) {

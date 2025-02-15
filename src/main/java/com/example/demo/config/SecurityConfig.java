@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
@@ -18,9 +19,12 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.beans.Customizer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 public class SecurityConfig {
@@ -40,26 +44,18 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsFilter()))
                 .csrf(csrf -> csrf.disable())
+//                .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/callback", "/api/auth/logout").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new KeycloakTokenFilter(),
-                        org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter.class) // Add custom introspection filter
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)))
-                .logout(logout -> logout
-                        .addLogoutHandler(keycloakLogoutHandler())
-                        .logoutSuccessHandler(oidcLogoutSuccessHandler(clientRegistrationRepository))
-                        .clearAuthentication(true)
-                        .deleteCookies("access_token", "refresh_token")
-                );
+                        BearerTokenAuthenticationFilter.class) // Add custom introspection filter
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)));
 
         return http.build();
     }
-
-
-
 
     @Bean
         public CorsConfigurationSource corsFilter() {
@@ -74,47 +70,4 @@ public class SecurityConfig {
             source.registerCorsConfiguration("/**", config);
             return source;
         }
-
-
-    private LogoutSuccessHandler oidcLogoutSuccessHandler(ClientRegistrationRepository clientRegistrationRepository) {
-        return (request, response, authentication) -> {
-            response.sendRedirect("http://localhost:8082/api/auth/login");
-        };
-    }
-
-    private LogoutHandler keycloakLogoutHandler() {
-        return (request, response, authentication) -> {
-            String refreshToken = extractCookie(request, "refresh_token");
-            if (refreshToken != null) {
-                revokeToken(refreshToken);
-            }
-        };
-    }
-
-    private void revokeToken(String refreshToken) {
-        String tokenRevocationUrl = "http://localhost:8080/realms/demo-realm/protocol/openid-connect/logout";
-
-        RestTemplate restTemplate = new RestTemplate();
-        Map<String, String> body = new HashMap<>();
-        body.put("client_id", "spring-backend");
-        body.put("client_secret", "RWZ07XimADvajYWWCXu84Utu65uCkQaE");
-        body.put("refresh_token", refreshToken);
-
-        try {
-            restTemplate.postForEntity(tokenRevocationUrl, body, String.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private String extractCookie(HttpServletRequest request, String cookieName) {
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if (cookie.getName().equals(cookieName)) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        return null;
-    }
 }

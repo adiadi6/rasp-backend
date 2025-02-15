@@ -3,6 +3,7 @@ package com.example.demo.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -25,14 +26,52 @@ public class AuthController {
 
     private final String frontendURL = "http://localhost:5173/cookies";
 
+    @Value("${authentication-type:auth-code}")
+    private String authenticationType;
+
+
     @GetMapping("/login")
-    public void login(HttpServletResponse response) throws IOException {
-        String authUrl = "http://localhost:8080/realms/demo-realm/protocol/openid-connect/auth"
-                + "?client_id=" + clientId
-                + "&response_type=code"
-                + "&scope=openid profile email"
-                + "&redirect_uri=" + redirectUri;
-        response.sendRedirect(authUrl);
+    public void login(@RequestParam(value = "username", required = false) String username,
+                      @RequestParam(value = "password", required = false) String password,
+                      HttpServletResponse response) throws IOException {
+        if ("implicit".equalsIgnoreCase(authenticationType) && username != null && password != null) {
+            handleImplicitFlow(username, password, response);
+        } else {
+            String authUrl = "http://localhost:8080/realms/demo-realm/protocol/openid-connect/auth"
+                    + "?client_id=" + clientId
+                    + "&response_type=code"
+                    + "&scope=openid profile email"
+                    + "&redirect_uri=" + redirectUri;
+            response.sendRedirect(authUrl);
+        }
+    }
+
+    private void handleImplicitFlow(String username, String password, HttpServletResponse response) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+        requestBody.add("grant_type", "password");
+        requestBody.add("client_id", clientId);
+        requestBody.add("client_secret", clientSecret);
+        requestBody.add("username", username);
+        requestBody.add("password", password);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<Map> tokenResponse = restTemplate.exchange(keycloakTokenUrl, HttpMethod.POST, request, Map.class);
+
+        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            return;
+        }
+
+        Map<String, String> body = tokenResponse.getBody();
+        String accessToken = body.get("access_token");
+        String refreshToken = body.get("refresh_token");
+
+        setCookie(response, "access_token", accessToken, 900); // 15 minutes expiry
+        setCookie(response, "refresh_token", refreshToken, 86400); // 24 hours expiry
     }
 
     @GetMapping("/callback")
@@ -72,27 +111,6 @@ public class AuthController {
         return new ResponseEntity<>(redirectHeaders, HttpStatus.FOUND);
 //        return ResponseEntity.ok("Login successful");
     }
-
-//    @PostMapping("/logout")
-////    @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
-//    public ResponseEntity<String> logout(@CookieValue(value = "refresh_token", required = false) String refreshToken, HttpServletResponse response) {
-//        if (refreshToken == null || refreshToken.isEmpty()) {
-//            System.out.println("No refresh token");
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Refresh token missing");
-//        }
-//        if (refreshToken != null) {
-//            RestTemplate restTemplate = new RestTemplate();
-//            Map<String, String> body = new HashMap<>();
-//            body.put("client_id", clientId);
-//            body.put("client_secret", clientSecret);
-//            body.put("refresh_token", refreshToken);
-//            restTemplate.postForEntity("http://localhost:8080/realms/demo-realm/protocol/openid-connect/logout", body, String.class);
-//        }
-//
-////        setCookie(response, "access_token", "", 0);
-////        setCookie(response, "refresh_token", "", 0);
-//        return ResponseEntity.ok("Logged out");
-//    }
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@CookieValue(value = "refresh_token", required = false) String refreshToken, HttpServletResponse response) {

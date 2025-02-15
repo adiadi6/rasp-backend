@@ -33,4 +33,6 @@ logging:
   level:
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
-    org.springframework.security.oauth2: TRACE
+    org.springframework.security.oauth2: DEBUG
+
+authentication-type: "implicit"
