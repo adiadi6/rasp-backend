@@ -44,6 +44,10 @@ public class KeycloakTokenFilter extends OncePerRequestFilter {
             return;
         }
 
+        System.out.println("Printing the access token in the request");
+
+        System.out.println(accessToken);
+
         // Validate token
         if (!isTokenValid(accessToken)) {
             System.out.println("done with validating access token");
@@ -56,14 +60,16 @@ public class KeycloakTokenFilter extends OncePerRequestFilter {
             if (refreshToken != null) {
                 accessToken = refreshAccessToken(refreshToken);
                 if (accessToken != null) {
-//                    response.setHeader("Authorization", "Bearer " + accessToken);
-//                    System.out.println(accessToken);
-                    // Set new access token in request header
-//                    request.setAttribute("Authorization", "Bearer " + accessToken);
-                    // Re-attempt the same request with the new access token
-//                    doFilterInternal(request, response, chain);
-
                     final String newAccessToken = accessToken;
+
+                    // Store the new access token in a cookie
+                    Cookie accessTokenCookie = new Cookie("access_token", newAccessToken);
+                    accessTokenCookie.setHttpOnly(false);
+                    accessTokenCookie.setSecure(false);
+                    accessTokenCookie.setPath("/");
+                    accessTokenCookie.setMaxAge(60*2); // Set expiry (30 minutes)
+                    accessTokenCookie.setDomain("localhost");
+                    response.addCookie(accessTokenCookie);
 
                     // Wrap the request with the new Authorization header
                     HttpServletRequest modifiedRequest = new HttpServletRequestWrapper(request) {

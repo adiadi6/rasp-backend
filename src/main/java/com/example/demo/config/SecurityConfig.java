@@ -30,13 +30,9 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
     private final JwtAuthConverter jwtAuthConverter;
-    private final JwtDecoder jwtDecoder;
-    private final JwtCookieFilter jwtCookieFilter;
 
-    public SecurityConfig(JwtAuthConverter jwtAuthConverter, JwtDecoder jwtDecoder, JwtCookieFilter jwtCookieFilter) {
+    public SecurityConfig(JwtAuthConverter jwtAuthConverter) {
         this.jwtAuthConverter = jwtAuthConverter;
-        this.jwtDecoder = jwtDecoder;
-        this.jwtCookieFilter = jwtCookieFilter;
     }
 
     @Bean
