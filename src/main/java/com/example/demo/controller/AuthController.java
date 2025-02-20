@@ -256,6 +256,183 @@ public class AuthController {
         return ResponseEntity.ok("User created successfully");
     }
 
+    @PostMapping("/add-client-role")
+    public ResponseEntity<String> addClientRole(@RequestParam String roleName) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // 🔹 Step 1: Get Admin Access Token using Client Credentials
+        MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
+        tokenRequestBody.add("grant_type", "client_credentials");
+        tokenRequestBody.add("client_id", clientId);
+        tokenRequestBody.add("client_secret", clientSecret);
+
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
+        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+                "http://localhost:8080/realms/demo-realm/protocol/openid-connect/token",
+                HttpMethod.POST,
+                tokenRequest,
+                Map.class
+        );
+
+        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
+        }
+
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+        // 🔹 Step 2: Get the Client ID (UUID) from Keycloak
+        HttpHeaders clientHeaders = new HttpHeaders();
+        clientHeaders.setBearerAuth(accessToken);
+        HttpEntity<Void> clientRequest = new HttpEntity<>(clientHeaders);
+
+        ResponseEntity<List> clientResponse = restTemplate.exchange(
+                "http://localhost:8080/admin/realms/demo-realm/clients",
+                HttpMethod.GET,
+                clientRequest,
+                List.class
+        );
+
+        if (!clientResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(clientResponse.getStatusCode()).body("Failed to fetch clients");
+        }
+
+        List<Map<String, Object>> clients = clientResponse.getBody();
+        String clientUUID = clients.stream()
+                .filter(client -> clientId.equals(client.get("clientId")))
+                .map(client -> (String) client.get("id"))
+                .findFirst()
+                .orElse(null);
+
+        if (clientUUID == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found");
+        }
+
+        // 🔹 Step 3: Create New Role for Client using Client UUID
+        HttpHeaders roleHeaders = new HttpHeaders();
+        roleHeaders.setContentType(MediaType.APPLICATION_JSON);
+        roleHeaders.setBearerAuth(accessToken);
+
+        Map<String, Object> rolePayload = new HashMap<>();
+        rolePayload.put("name", roleName);
+        rolePayload.put("description", "Auto-created client role");
+
+        HttpEntity<Map<String, Object>> roleRequest = new HttpEntity<>(rolePayload, roleHeaders);
+        ResponseEntity<String> roleResponse = restTemplate.exchange(
+                "http://localhost:8080/admin/realms/demo-realm/clients/" + clientUUID + "/roles",
+                HttpMethod.POST,
+                roleRequest,
+                String.class
+        );
+
+        if (!roleResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(roleResponse.getStatusCode()).body("Failed to create client role");
+        }
+
+        return ResponseEntity.ok("Client role '" + roleName + "' added successfully to client '" + clientId + "'");
+    }
+
+//    ### Keycloak Role Mapping (Client Roles)
+
+//```java
+    @PostMapping("/assign-client-role")
+    public ResponseEntity<String> assignClientRole(
+            @RequestParam String username,
+            @RequestParam String roleName) {
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // 🔹 Step 1: Get Admin Access Token
+        MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
+        tokenRequestBody.add("grant_type", "client_credentials");
+        tokenRequestBody.add("client_id", clientId);
+        tokenRequestBody.add("client_secret", clientSecret);
+
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
+        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+                "http://localhost:8080/realms/demo-realm/protocol/openid-connect/token",
+                HttpMethod.POST,
+                tokenRequest,
+                Map.class
+        );
+
+        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
+        }
+
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+        // 🔹 Step 2: Get User ID
+        HttpHeaders authHeaders = new HttpHeaders();
+        authHeaders.setBearerAuth(accessToken);
+        HttpEntity<Void> userRequest = new HttpEntity<>(authHeaders);
+
+        ResponseEntity<List> userResponse = restTemplate.exchange(
+                "http://localhost:8080/admin/realms/demo-realm/users?username=" + username,
+                HttpMethod.GET,
+                userRequest,
+                List.class
+        );
+
+        if (userResponse.getBody().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        String userId = ((Map<String, Object>) userResponse.getBody().get(0)).get("id").toString();
+
+        // 🔹 Step 3: Get Client ID
+        ResponseEntity<List> clientResponse = restTemplate.exchange(
+                "http://localhost:8080/admin/realms/demo-realm/clients?clientId=" + clientId,
+                HttpMethod.GET,
+                userRequest,
+                List.class
+        );
+
+        if (clientResponse.getBody().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found");
+        }
+
+        String clientUuid = ((Map<String, Object>) clientResponse.getBody().get(0)).get("id").toString();
+
+        // 🔹 Step 4: Get Client Role
+        ResponseEntity<List> roleResponse = restTemplate.exchange(
+                "http://localhost:8080/admin/realms/demo-realm/clients/" + clientUuid + "/roles",
+                HttpMethod.GET,
+                userRequest,
+                List.class
+        );
+
+        List<Map<String, Object>> roles = roleResponse.getBody();
+        Map<String, Object> role = roles.stream()
+                .filter(r -> roleName.equals(r.get("name")))
+                .findFirst()
+                .orElse(null);
+
+        if (role == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Role not found");
+        }
+
+        // 🔹 Step 5: Assign Client Role to User
+        HttpEntity<List<Map<String, Object>>> assignRoleRequest = new HttpEntity<>(List.of(role), authHeaders);
+        ResponseEntity<String> assignRoleResponse = restTemplate.exchange(
+                "http://localhost:8080/admin/realms/demo-realm/users/" + userId + "/role-mappings/clients/" + clientUuid,
+                HttpMethod.POST,
+                assignRoleRequest,
+                String.class
+        );
+
+        if (!assignRoleResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(assignRoleResponse.getStatusCode()).body("Failed to assign role");
+        }
+
+        return ResponseEntity.ok("Role '" + roleName + "' assigned successfully to user '" + username + "'");
+    }
+
+
+
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@CookieValue(value = "refresh_token", required = false) String refreshToken, HttpServletResponse response) {
         if (refreshToken == null || refreshToken.isEmpty()) {
