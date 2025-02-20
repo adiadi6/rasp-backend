@@ -8,11 +8,14 @@ import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+//import org.springframework.web.client.DefaultRestClient;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -23,6 +26,8 @@ public class AuthController {
     private final String clientSecret = "RWZ07XimADvajYWWCXu84Utu65uCkQaE"; // Replace with your actual secret
     private final String redirectUri = "http://localhost:8082/api/auth/callback";
     private final String keycloakTokenUrl = "http://localhost:8080/realms/demo-realm/protocol/openid-connect/token";
+
+    private final String keycloakUrl = "http://localhost:8080/realms/demo-realm";
 
     private final String frontendURL = "http://localhost:5173/cookies";
 
@@ -110,6 +115,145 @@ public class AuthController {
 //
         return new ResponseEntity<>(redirectHeaders, HttpStatus.FOUND);
 //        return ResponseEntity.ok("Login successful");
+    }
+
+    @PostMapping("/addUser")
+    public ResponseEntity<String> addUser(@RequestParam String adminUsername,
+                                          @RequestParam String adminPassword,
+                                          @RequestParam String newUsername,
+                                          @RequestParam String newPassword,
+                                          @RequestParam String newFirstName,
+                                          @RequestParam String newLastName,
+                                          @RequestParam String newEmail) {
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // Step 1: Get Admin Access Token using Password Grant
+        MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
+        tokenRequestBody.add("grant_type", "password");
+        tokenRequestBody.add("client_id", "admin-cli");
+        tokenRequestBody.add("username", adminUsername);
+        tokenRequestBody.add("password", adminPassword);
+
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
+        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+                "http://localhost:8080/realms/master/protocol/openid-connect/token",
+                HttpMethod.POST,
+                tokenRequest,
+                Map.class
+        );
+
+        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
+        }
+
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+        // Step 2: Create New User in Keycloak
+        HttpHeaders userHeaders = new HttpHeaders();
+        userHeaders.setContentType(MediaType.APPLICATION_JSON);
+        userHeaders.setBearerAuth(accessToken);
+
+        Map<String, Object> userPayload = new HashMap<>();
+        userPayload.put("username", newUsername);
+        userPayload.put("email", newEmail);
+        userPayload.put("enabled", true);
+        userPayload.put("emailVerified", true);
+        userPayload.put("firstName", newFirstName);
+        userPayload.put("lastName", newLastName);
+        userPayload.put("requiredActions", List.of()); // No required actions
+
+
+        Map<String, Object> credentials = new HashMap<>();
+        credentials.put("type", "password");
+        credentials.put("value", newPassword);
+        credentials.put("temporary", false);
+
+        userPayload.put("credentials", List.of(credentials));
+
+        HttpEntity<Map<String, Object>> userRequest = new HttpEntity<>(userPayload, userHeaders);
+
+        ResponseEntity<String> userResponse = restTemplate.exchange(
+                "http://localhost:8080/admin/realms/demo-realm/users",
+                HttpMethod.POST,
+                userRequest,
+                String.class
+        );
+
+        if (!userResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(userResponse.getStatusCode()).body("Failed to create user");
+        }
+
+        return ResponseEntity.ok("User created successfully");
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<String> registerUser(@RequestParam String newUsername,
+                                               @RequestParam String newPassword,
+                                               @RequestParam String newFirstName,
+                                               @RequestParam String newLastName,
+                                               @RequestParam String newEmail) {
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // Step 1: Get Admin Access Token using Client Credentials Grant
+        MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
+        tokenRequestBody.add("grant_type", "client_credentials");
+        tokenRequestBody.add("client_id", clientId);
+        tokenRequestBody.add("client_secret", clientSecret);
+
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
+        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+                "http://localhost:8080/realms/demo-realm/protocol/openid-connect/token",
+                HttpMethod.POST,
+                tokenRequest,
+                Map.class
+        );
+
+        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
+        }
+
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+        // Step 2: Create New User in Keycloak
+        HttpHeaders userHeaders = new HttpHeaders();
+        userHeaders.setContentType(MediaType.APPLICATION_JSON);
+        userHeaders.setBearerAuth(accessToken);
+
+        Map<String, Object> userPayload = new HashMap<>();
+        userPayload.put("username", newUsername);
+        userPayload.put("email", newEmail);
+        userPayload.put("enabled", true);
+        userPayload.put("emailVerified", true);
+        userPayload.put("firstName", newFirstName);
+        userPayload.put("lastName", newLastName);
+
+        Map<String, Object> credentials = new HashMap<>();
+        credentials.put("type", "password");
+        credentials.put("value", newPassword);
+        credentials.put("temporary", false);
+
+        userPayload.put("credentials", List.of(credentials));
+
+        HttpEntity<Map<String, Object>> userRequest = new HttpEntity<>(userPayload, userHeaders);
+
+        ResponseEntity<String> userResponse = restTemplate.exchange(
+                "http://localhost:8080/admin/realms/demo-realm/users",
+                HttpMethod.POST,
+                userRequest,
+                String.class
+        );
+
+        if (!userResponse.getStatusCode().is2xxSuccessful()) {
+            return ResponseEntity.status(userResponse.getStatusCode()).body("Failed to create user");
+        }
+
+        return ResponseEntity.ok("User created successfully");
     }
 
     @PostMapping("/logout")

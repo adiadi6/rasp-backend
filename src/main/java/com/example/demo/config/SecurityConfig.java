@@ -43,7 +43,7 @@ public class SecurityConfig {
 //                .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/callback", "/api/auth/logout").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/callback", "/api/auth/logout","/api/auth/addUser","/api/auth/register").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new KeycloakTokenFilter(),
