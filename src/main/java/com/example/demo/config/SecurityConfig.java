@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -30,9 +31,13 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
     private final JwtAuthConverter jwtAuthConverter;
+    private final JwtDecoder jwtDecoder;
+    private final JdbcTemplate jdbcTemplate;
 
-    public SecurityConfig(JwtAuthConverter jwtAuthConverter) {
+    public SecurityConfig(JwtAuthConverter jwtAuthConverter, JwtDecoder jwtDecoder, JdbcTemplate jdbcTemplate) {
         this.jwtAuthConverter = jwtAuthConverter;
+        this.jwtDecoder = jwtDecoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Bean
@@ -48,6 +53,7 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(new KeycloakTokenFilter(),
                         BearerTokenAuthenticationFilter.class) // Add custom introspection filter
+                .addFilterAfter(new ResourceAccessFilter(jwtDecoder, jdbcTemplate), KeycloakTokenFilter.class) // Add new filter
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)));
 
         return http.build();
