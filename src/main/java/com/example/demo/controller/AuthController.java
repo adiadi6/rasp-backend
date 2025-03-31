@@ -23,7 +23,7 @@ import java.util.Map;
 public class AuthController {
 
     private final String clientId = "spring-backend";
-    private final String clientSecret = "RWZ07XimADvajYWWCXu84Utu65uCkQaE"; // Replace with your actual secret
+    private final String clientSecret = "TlEPoVHGpfXbNoAPzotc54J8KGqE8sVR"; // Replace with your actual secret
     private final String redirectUri = "http://localhost:8082/api/auth/callback";
     private final String keycloakTokenUrl = "http://localhost:8080/realms/demo-realm/protocol/openid-connect/token";
 

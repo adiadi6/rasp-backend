@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import com.example.demo.service.RoleResourceService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,11 +35,15 @@ public class SecurityConfig {
     private final JwtDecoder jwtDecoder;
     private final JdbcTemplate jdbcTemplate;
 
-    public SecurityConfig(JwtAuthConverter jwtAuthConverter, JwtDecoder jwtDecoder, JdbcTemplate jdbcTemplate) {
+    private final RoleResourceService roleResourceService;
+
+    public SecurityConfig(JwtAuthConverter jwtAuthConverter, JwtDecoder jwtDecoder, JdbcTemplate jdbcTemplate, RoleResourceService roleResourceService) {
         this.jwtAuthConverter = jwtAuthConverter;
         this.jwtDecoder = jwtDecoder;
         this.jdbcTemplate = jdbcTemplate;
+        this.roleResourceService = roleResourceService;
     }
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, ClientRegistrationRepository clientRegistrationRepository) throws Exception {
@@ -48,12 +53,12 @@ public class SecurityConfig {
 //                .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/callback", "/api/auth/logout","/api/auth/addUser","/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/callback", "/api/auth/logout","/api/auth/addUser","/api/auth/register","/api/public").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new KeycloakTokenFilter(),
                         BearerTokenAuthenticationFilter.class) // Add custom introspection filter
-                .addFilterAfter(new ResourceAccessFilter(jwtDecoder, jdbcTemplate), KeycloakTokenFilter.class) // Add new filter
+                .addFilterAfter(new ResourceAccessFilter(jwtDecoder, roleResourceService), KeycloakTokenFilter.class)
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)));
 
         return http.build();
