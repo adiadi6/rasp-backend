@@ -42,14 +42,12 @@ Once the application is running and properly configured, the backend is protecte
 
 The following endpoints have been implemented to support login, registration, role assignment, and logout functionality:
 
-| Endpoint                     | Description                                        |
-|------------------------------|----------------------------------------------------|
-| `POST /api/auth`            | Handles internal auth logic post token validation |
-| `GET /login`                | Redirects to Keycloak login (publicly accessible)  |
-| `POST /register`            | Registers a new user                               |
-| `POST /addUser`             | Adds a user directly (admin functionality)         |
-| `POST /add-client-role`     | Adds a new client role in Keycloak                 |
-| `POST /assign-client-role`  | Assigns a role to a specific user                  |
-| `POST /logout`              | Logs out the user and invalidates tokens           |
+| **Endpoint**                  | **Method** | **Description**                              | **Request Params**                                                                                                            | **Response**                                             |
+|------------------------------|------------|----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
+| `/api/auth/login`            | `GET`      | Starts login flow (code/password)            | Optional: `username`, `password`                                                                                              | Redirect or token cookies                               |
+| `/api/auth/callback`         | `GET`      | Handles OAuth2 callback and sets cookies     | `code`                                                                                                                        | Redirect to frontend or `401` if error                  |
+| `/api/auth/addUser`          | `POST`     | Adds new user (admin credentials)            | `adminUsername`, `adminPassword`, `newUsername`, `newPassword`, `newFirstName`, `newLastName`, `newEmail`                    | `200 OK` or `401 UNAUTHORIZED`                          |
+| `/api/auth/register`         | `POST`     | Self-registration via client credentials     | `newUsername`, `newPassword`, `newFirstName`, `newLastName`, `newEmail`                                                      | `200 OK` or `401 UNAUTHORIZED`                          |
+| `/api/auth/add-client-role`  | `POST`     | Creates a new client role in Keycloak        | `roleName`                                                                                                                    | `200 OK` or `401 UNAUTHORIZED`                          |
 
-👉 **Note**: Request and response body formats for these APIs will be added in the next section.
+---
