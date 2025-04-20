@@ -4,8 +4,8 @@ server:
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/keycloak_trial
-    username: root
-    password: Admin@1212
+    username: adi
+    password: adithya123
     driver-class-name: com.mysql.cj.jdbc.Driver
   security:
     oauth2:
@@ -13,7 +13,7 @@ spring:
         registration:
           keycloak:
             client-id: spring-backend
-            client-secret: "RWZ07XimADvajYWWCXu84Utu65uCkQaE"
+            client-secret: "TlEPoVHGpfXbNoAPzotc54J8KGqE8sVR"
             authorization-grant-type: authorization_code
             scope: openid, profile, email
         provider:
