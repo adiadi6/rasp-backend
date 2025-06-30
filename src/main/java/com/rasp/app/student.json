@@ -1,0 +1,43 @@
+{
+  "student" : {
+    "cluster" : "exam_portal",
+
+    "api" : true,
+    "display_name" : "student",
+    "menu_content" : "setup",
+    "blocks": {
+      "course" : {
+        "title": "student Details",
+        "order": 1
+      }
+    },
+    "fields" : {
+      "id": {
+        "index": true,
+        "name": "id",
+        "required": true,
+        "type": "String"
+      },
+      "s_name": {
+        "name": "batch_name",
+        "type": "String",
+        "required": true
+      },
+      "status": {
+        "name": "status",
+        "type": "String",
+        "required": true
+      },
+      "b_id": {
+        "name": "b_id",
+        "type": "String",
+        "required": true,
+        "foreign": {
+          "resource": "Batch"
+        }
+
+      }
+
+    }
+  }
+}

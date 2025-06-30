@@ -1,0 +1,23 @@
+{
+			"resource" : "role_resource_permission",
+			"table" : true,
+			"tile" : false,
+			"page_name" : {
+				"list" : "role_resource_permission",
+				"add" : "role_resource_permission",
+				"edit" : "role_resource_permission",
+				"view" : "role_resource_permission"
+			},
+			"add_required" : true,
+			"modify_required" : true,
+			"delete_required" : true,
+			"login_required" : true,
+			"list" : {
+				"fields":[
+				]
+			},
+			"form" : {
+					"blocks": [
+					]
+			}
+}

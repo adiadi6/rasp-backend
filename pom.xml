@@ -5,14 +5,14 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.4.2</version>
+		<version>3.3.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example</groupId>
-	<artifactId>demo</artifactId>
+	<groupId>com.rasp</groupId>
+	<artifactId>rasp_application</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>demo</name>
-	<description>Demo project for Spring Boot</description>
+	<name>app</name>
+	<description>Rasp Spring Boot</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -28,6 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<rasp-platform.version>1.0.0-SNAPSHOT</rasp-platform.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -104,6 +105,12 @@
 			<groupId>com.github.ben-manes.caffeine</groupId>
 			<artifactId>caffeine</artifactId>
 			<version>3.1.8</version>
+		</dependency>
+
+		<dependency>
+			<groupId>rasp-platform</groupId>
+			<artifactId>rasp-platform</artifactId>
+			<version>${rasp-platform.version}</version>
 		</dependency>
 
 	</dependencies>

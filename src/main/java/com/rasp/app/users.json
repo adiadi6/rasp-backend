@@ -1,0 +1,33 @@
+{
+  "users" : {
+    "cluster" : "traveler_db",
+
+    "api" : true,
+    "display_name" : "users",
+    "menu_content" : "setup",
+    "blocks": {
+      "course" : {
+        "title": "users Details",
+        "order": 1
+      }
+    },
+    "fields" : {
+      "id": {
+        "index": true,
+        "name": "id",
+        "required": true,
+        "type": "String"
+      },
+      "user_name": {
+        "name": "user_name",
+        "type": "String",
+        "required": true
+      },
+      "user_email": {
+        "name": "user_email",
+        "type": "String",
+        "required": true
+      }
+    }
+  }
+}

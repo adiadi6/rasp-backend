@@ -1,0 +1,23 @@
+{
+			"resource" : "role_user_res_instance",
+			"table" : true,
+			"tile" : false,
+			"page_name" : {
+				"list" : "role_user_res_instance",
+				"add" : "role_user_res_instance",
+				"edit" : "role_user_res_instance",
+				"view" : "role_user_res_instance"
+			},
+			"add_required" : true,
+			"modify_required" : true,
+			"delete_required" : true,
+			"login_required" : true,
+			"list" : {
+				"fields":[
+				]
+			},
+			"form" : {
+					"blocks": [
+					]
+			}
+}

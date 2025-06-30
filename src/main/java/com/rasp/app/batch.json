@@ -1,0 +1,33 @@
+{
+  "batch" : {
+    "cluster" : "exam_portal",
+
+    "api" : true,
+    "display_name" : "Batch",
+    "menu_content" : "setup",
+    "blocks": {
+      "course" : {
+        "title": "Batch Details",
+        "order": 1
+      }
+    },
+    "fields" : {
+      "id": {
+        "index": true,
+        "name": "id",
+        "required": true,
+        "type": "String"
+      },
+      "batch_name": {
+        "name": "batch_name",
+        "type": "String",
+        "required": true
+      },
+      "batch_code": {
+        "name": "batch_code",
+        "type": "String",
+        "required": true
+      }
+    }
+  }
+}

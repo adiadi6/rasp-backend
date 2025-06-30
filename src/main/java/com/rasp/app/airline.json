@@ -1,0 +1,33 @@
+{
+  "airline" : {
+    "cluster" : "traveler_db",
+
+    "api" : true,
+    "display_name" : "airline",
+    "menu_content" : "setup",
+    "blocks": {
+      "course" : {
+        "title": "airline Details",
+        "order": 1
+      }
+    },
+    "fields" : {
+      "id": {
+        "index": true,
+        "name": "id",
+        "required": true,
+        "type": "String"
+      },
+      "airline_name": {
+        "name": "airline_name",
+        "type": "String",
+        "required": true
+      },
+      "airline_code": {
+        "name": "airline_code",
+        "type": "String",
+        "required": true
+      }
+    }
+  }
+}

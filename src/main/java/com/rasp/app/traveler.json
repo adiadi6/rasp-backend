@@ -1,0 +1,33 @@
+{
+  "traveler" : {
+    "cluster" : "traveler_db",
+
+    "api" : true,
+    "display_name" : "traveler",
+    "menu_content" : "setup",
+    "blocks": {
+      "course" : {
+        "title": "traveler Details",
+        "order": 1
+      }
+    },
+    "fields" : {
+      "id": {
+        "index": true,
+        "name": "id",
+        "required": true,
+        "type": "String"
+      },
+      "traveler_name": {
+        "name": "traveler_name",
+        "type": "String",
+        "required": true
+      },
+      "traveler_email": {
+        "name": "traveler_email",
+        "type": "String",
+        "required": true
+      }
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "flight" : {
+    "cluster" : "traveler_db",
+
+    "api" : true,
+    "display_name" : "flight",
+    "menu_content" : "setup",
+    "blocks": {
+      "course" : {
+        "title": "flight Details",
+        "order": 1
+      }
+    },
+    "fields" : {
+      "id": {
+        "index": true,
+        "name": "id",
+        "required": true,
+        "type": "String"
+      },
+      "flight_name": {
+        "name": "flight_name",
+        "type": "String",
+        "required": true
+      },
+      "airline_id": {
+        "name": "airline_id",
+        "type": "String",
+        "required": true,
+        "foreign": {
+          "resource": "Airline"
+        }
+      },
+      "location_id": {
+        "name": "location_id",
+        "type": "String",
+        "required": false
+      }
+    }
+  }
+}

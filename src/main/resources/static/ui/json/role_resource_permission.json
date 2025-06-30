@@ -1,0 +1,41 @@
+{
+  "role_resource_permission": {
+    "cluster": "DB_ACCOUNT",
+    "ui": true,
+    "api": true,
+
+    "fields": {
+      "id": {
+        "index": true,
+        "length": 128,
+        "required": true,
+        "type": "String"
+      },
+
+
+      "role": {
+
+        "length": 40,
+        "type": "String"
+
+      },
+      "resource": {
+        "index": true,
+        "length": 128,
+        "type": "String",
+        "required": true
+
+      },
+
+      "action": {
+        "index": true,
+        "length": 128,
+        "type": "Array"
+
+
+
+      }
+
+    }
+  }
+}

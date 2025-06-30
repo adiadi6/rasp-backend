@@ -1,0 +1,24 @@
+{
+  "resource_role" : {
+    "cluster" : "DB_ACCOUNT",
+    "api" : true,
+    "fields" : {
+      "id": {
+        "index": true,
+        "name": "id",
+        "required": true,
+        "type": "String"
+      },
+      "resource_name": {
+        "name": "resource_name",
+        "type": "String",
+        "required": true
+      },
+      "role": {
+        "name": "role",
+        "type": "String",
+        "required": true
+      }
+    }
+  }
+}
