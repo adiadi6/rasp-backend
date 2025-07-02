@@ -8,6 +8,7 @@ import com.rasp.app.resource.RoleResourcePermission;
 import com.rasp.app.resource.RoleUserResInstance;
 import jakarta.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,7 @@ public class RoleResourceAccess {
     //  private final ApplicationContext applicationContext; // Access ApplicationContext
     private static RoleResourceAccess instance;
 
+    private static final String clientId="adi-rest-api";
 
 //    @Autowired
 //    private CacheManager cacheManager;
@@ -204,7 +206,7 @@ public class RoleResourceAccess {
 
             if (resourceAccess != null) {
                 Map<String, Object> resourceAccessMap = (Map<String, Object>) resourceAccess;
-                Map<String, Object> clientRoles = (Map<String, Object>) resourceAccessMap.get("adi-rest-api");
+                Map<String, Object> clientRoles = (Map<String, Object>) resourceAccessMap.get(clientId);
                 if (clientRoles != null) {
                     List<String> clientRolesList = (List<String>) clientRoles.get("roles");
                     roles.addAll(clientRolesList);
@@ -397,7 +399,7 @@ public class RoleResourceAccess {
                 RoleResourcePermission roleResourcePermission = (RoleResourcePermission) RoleResourcePermissionHelper.getInstance().
                         getByExpressionFirstRecord(Expression.and(new Expression(RoleResourcePermission.
                                         FIELD_ROLE, REL_OP.EQ, role),
-                                new Expression(RoleResourcePermission.FIELD_ACTION, REL_OP.EQ, "get_by_id"),
+                                new Expression(RoleResourcePermission.FIELD_ACTION, REL_OP.EQ, clientId),
                                 new Expression(RoleResourcePermission.FIELD_RESOURCE, REL_OP.EQ, updatedResource)));
 
                 if(roleResourcePermission==null){
