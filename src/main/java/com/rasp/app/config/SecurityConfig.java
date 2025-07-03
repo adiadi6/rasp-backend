@@ -51,7 +51,7 @@ public class SecurityConfig {
                 .addFilterBefore(new KeycloakTokenFilter(),
                         BearerTokenAuthenticationFilter.class) // Add custom introspection filter
                 .addFilterAfter(new RoleFilter(), BearerTokenAuthenticationFilter.class)
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)));
+               .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthConverter)));
 
         return http.build();
     }
