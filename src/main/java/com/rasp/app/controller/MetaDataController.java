@@ -2,6 +2,7 @@ package com.rasp.app.controller;
 
 
 import com.rasp.app.resource.MetaDataDto;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
@@ -19,6 +20,12 @@ import java.util.*;
 @CrossOrigin("*")
 @RestController
 public class MetaDataController {
+
+   @Value("${ResourcePack}")
+  private   String resourcePack;
+
+    @Value("${reference_package_path}")
+    private String referencePack;
 
     @GetMapping("/api/getAllResourceMetaData")
     public ResponseEntity<?> getAllMetaData() {
@@ -39,7 +46,7 @@ public class MetaDataController {
     }
 
 
-    public static List<MetaDataDto> processMetadata() {
+    public  List<MetaDataDto> processMetadata() {
         List<MetaDataDto> dtos = new ArrayList<>();
         try {
             ClassPathScanningCandidateComponentProvider provider = new ClassPathScanningCandidateComponentProvider(false);  // 'false' to disable default filters
@@ -49,8 +56,8 @@ public class MetaDataController {
             provider.addIncludeFilter(filter);
 
             // Scan the base package (use package name, not the full path)
-            String basePackage = "com.flightBooking.resource";  // Just the package name
-
+//            String basePackage = "com.flightBooking.resource";  // Just the package name
+            String basePackage =resourcePack;
             Map<String, Object> values = new HashMap<>();
             if (basePackage != null) {
                 Set<BeanDefinition> components = provider.findCandidateComponents(basePackage);
@@ -160,7 +167,7 @@ public class MetaDataController {
         provider.addIncludeFilter(filter);
 
         // Scan the base package (use package name, not the full path)
-        String basePackage = "com.flightBooking.resource";  // Just the package name
+        String basePackage = resourcePack;  // Just the package name
         Set<BeanDefinition> components = provider.findCandidateComponents(basePackage);
         List<String> resources = new ArrayList<>();
         // Print the class names found
@@ -177,7 +184,7 @@ public class MetaDataController {
         return resources;
     }
 
-    public static List<MetaDataDto> processMetadata(String resource) {
+    public  List<MetaDataDto> processMetadata(String resource) {
 
 
         List<MetaDataDto> dtos = new ArrayList<>();
@@ -190,7 +197,8 @@ public class MetaDataController {
             provider.addIncludeFilter(filter);
            String fileName;
             // Scan the base package (use package name, not the full path)
-            String basePackage = "com.example.demo";  // Just the package name
+//            String basePackage = "com.example.demo";  // Just the package name
+            String basePackage = referencePack;
 
             Map<String, Object> values = new HashMap<>();
             if (basePackage != null) {

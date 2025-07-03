@@ -369,7 +369,7 @@ public class RoleResourceAccess {
         String user = getUserId();
         String res = resourceName;
         List<Map<String, String>> foreignResource = new ArrayList<>();
-        List<MetaDataDto> dtos = MetaDataController.processMetadata(resourceName);
+        List<MetaDataDto> dtos =new MetaDataController().processMetadata(resourceName);
         List<Map<String, Object>> fields = dtos.getFirst().getFieldValues();
         for (Map<String, Object> field : fields) {
             if (field.containsKey("foreign")) {

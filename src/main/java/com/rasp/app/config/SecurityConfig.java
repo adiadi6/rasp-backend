@@ -45,7 +45,7 @@ public class SecurityConfig {
 //                .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/register","/api/auth/login", "/api/auth/callback", "/api/auth/logout","/api/auth/addUser","/api/v1/role_resource","/api/auth/add-client-role","/api/auth/assign-client-role","/api/auth/user_resource_role","/api/role_resource_permission","/api/auth/add_user","/api/generateApp","/api/resource_role","/api/auth/user_role_mapping").permitAll()
+                        .requestMatchers("/api/auth/register","/api/auth/login", "/api/auth/callback", "/api/auth/logout","/api/auth/addUser","/api/v1/role_resource","/api/auth/add-client-role","/api/auth/assign-client-role","/api/auth/user_resource_role","/api/role_resource_permission","/api/auth/add_user","/api/generateApp","/api/resource_role","/api/auth/user_role_mapping","/api/getAllResourceMetaData","/api/GetAllResource","/api/getAllResourceMetaData/{resource}").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new KeycloakTokenFilter(),

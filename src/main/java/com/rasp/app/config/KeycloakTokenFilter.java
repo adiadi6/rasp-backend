@@ -54,6 +54,9 @@ public class KeycloakTokenFilter extends OncePerRequestFilter {
                 path.equals("/api/generateApp")||
                 path.equals("/api/resource_role")||
                 path.equals("/api/auth/user_role_mapping")||
+                path.equals("/api/getAllResourceMetaData")||
+                path.equals("/api/GetAllResource")||
+                path.startsWith("/api/getAllResourceMetaData/")||
                // path.equals("/api/batch")||
                 path.equals("/api/auth/addUser")) {
 
