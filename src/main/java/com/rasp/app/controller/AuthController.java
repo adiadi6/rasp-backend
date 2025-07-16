@@ -55,9 +55,10 @@ public class AuthController {
 
 
     @GetMapping("/login")
-    public void login(@RequestParam(value = "username", required = false) String username,
-                      @RequestParam(value = "password", required = false) String password,
+    public void login(@RequestBody Map<String ,Object> loginDetails,
                       HttpServletResponse response) throws IOException {
+        String username= (String) loginDetails.get("username");
+        String  password= (String) loginDetails.get("password");
         if ("implicit".equalsIgnoreCase(authenticationType) && username != null && password != null) {
             handleImplicitFlow(username, password, response);
         } else {

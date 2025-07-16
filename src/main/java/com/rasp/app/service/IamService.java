@@ -2,6 +2,7 @@ package com.rasp.app.service;
 
 import com.rasp.app.helper.RoleUserResInstanceHelper;
 import com.rasp.app.resource.RoleUserResInstance;
+import com.rasp.app.resource.UserResource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -123,86 +124,93 @@ public class IamService {
     }
 
 
-    public ResponseEntity<?> addUser(String newUsername, String newPassword, String newFirstName, String newLastName, String newEmail, String resource, Map<String, Object> map) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ClassNotFoundException, ApplicationException {
-
-        String myClass= resourcePackage+"."+resource;
-        Class<BaseResource> clazz = (Class<BaseResource>) Class.forName(myClass);
-
-
-        BaseResource baseResource= clazz.getDeclaredConstructor().newInstance();
-        baseResource.convertMapToResource(map);
-
-        String myHelper= helperPackage+"."+resource+"Helper";
-        Class<BaseHelper> clazz2=(Class<BaseHelper>) Class.forName(myHelper) ;
-        BaseHelper baseHelper=clazz2.getDeclaredConstructor().newInstance();
-        baseHelper.add(baseResource);
+public ResponseEntity<?> addUser(UserResource userResource) throws NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ClassNotFoundException, ApplicationException {
+Map<String,Object> resourceMap= userResource.getResourceMap();
+Map<String,Object> authMap=userResource.getAuthMap();
+String resource=userResource.getResourceName();
+    String myClass= resourcePackage+"."+resource;
+    Class<BaseResource> clazz = (Class<BaseResource>) Class.forName(myClass);
 
 
-        System.out.println( baseResource.getId()+"1111111111111111222222222222222");
+    BaseResource baseResource= clazz.getDeclaredConstructor().newInstance();
+    baseResource.convertMapToResource(resourceMap);
 
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        // Step 1: Get Admin Access Token using Client Credentials Grant
-        MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
-        tokenRequestBody.add("grant_type", "client_credentials");
-        tokenRequestBody.add("client_id", clientId);
-        tokenRequestBody.add("client_secret", clientSecret);
-
-        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
-        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
-                keycloakTokenUrl,
-                HttpMethod.POST,
-                tokenRequest,
-                Map.class
-        );
-
-        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
-        }
-
-        String accessToken = (String) tokenResponse.getBody().get("access_token");
-
-        // Step 2: Create New User in Keycloak
-        HttpHeaders userHeaders = new HttpHeaders();
-        userHeaders.setContentType(MediaType.APPLICATION_JSON);
-        userHeaders.setBearerAuth(accessToken);
-
-        Map<String, Object> userPayload = new HashMap<>();
-        userPayload.put("username", newUsername);
-        userPayload.put("email", newEmail);
-        userPayload.put("enabled", true);
-        userPayload.put("emailVerified", true);
-        userPayload.put("firstName", newFirstName);
-        userPayload.put("lastName", newLastName);
-
-        Map<String, Object> credentials = new HashMap<>();
-        credentials.put("type", "password");
-        credentials.put("value", newPassword);
-        credentials.put("temporary", false);
-
-        // Custom Attributes
-        Map<String, List<String>> attributes = new HashMap<>();
-        attributes.put("custom_id", List.of( baseResource.getId())); // Correct: List of Strings
-
-        userPayload.put("attributes", attributes); // or any value you want
-        userPayload.put("credentials", List.of(credentials));
-
-        HttpEntity<Map<String, Object>> userRequest = new HttpEntity<>(userPayload, userHeaders);
-
-        ResponseEntity<String> userResponse = restTemplate.exchange(
-                keycloakUrl+"/users",
-                HttpMethod.POST,
-                userRequest,
-                String.class
-        );
+    String myHelper= helperPackage+"."+resource+"Helper";
+    Class<BaseHelper> clazz2=(Class<BaseHelper>) Class.forName(myHelper) ;
+    BaseHelper baseHelper=clazz2.getDeclaredConstructor().newInstance();
+    baseHelper.add(baseResource);
 
 
+    System.out.println( baseResource.getId()+"1111111111111111222222222222222");
 
-        if (!userResponse.getStatusCode().is2xxSuccessful()) {
-            return ResponseEntity.status(userResponse.getStatusCode()).body("Failed to create user");
-        }
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+    // Step 1: Get Admin Access Token using Client Credentials Grant
+    MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
+    tokenRequestBody.add("grant_type", "client_credentials");
+    tokenRequestBody.add("client_id", clientId);
+    tokenRequestBody.add("client_secret", clientSecret);
+
+    HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
+    ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+            keycloakTokenUrl,
+            HttpMethod.POST,
+            tokenRequest,
+            Map.class
+    );
+
+    if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
+    }
+
+    String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+    // Step 2: Create New User in Keycloak
+    HttpHeaders userHeaders = new HttpHeaders();
+    userHeaders.setContentType(MediaType.APPLICATION_JSON);
+    userHeaders.setBearerAuth(accessToken);
+    String user= (String) authMap.get("userName");
+    String email=  (String) authMap.get("email");
+    String firstName= (String) authMap.get("firstName");
+    String lastName=(String) authMap.get("lastName");
+    String password=(String) authMap.get("password");
+
+    Map<String, Object> userPayload = new HashMap<>();
+    userPayload.put("username", user);
+    userPayload.put("email",email );
+    userPayload.put("enabled", true);
+    userPayload.put("emailVerified", true);
+    userPayload.put("firstName", firstName);
+    userPayload.put("lastName", lastName);
+
+    Map<String, Object> credentials = new HashMap<>();
+    credentials.put("type", "password");
+    credentials.put("value", password);
+    credentials.put("temporary", false);
+
+    // Custom Attributes
+    Map<String, List<String>> attributes = new HashMap<>();
+    attributes.put("custom_id", List.of( baseResource.getId())); // Correct: List of Strings
+
+    userPayload.put("attributes", attributes); // or any value you want
+    userPayload.put("credentials", List.of(credentials));
+
+    HttpEntity<Map<String, Object>> userRequest = new HttpEntity<>(userPayload, userHeaders);
+
+    ResponseEntity<String> userResponse = restTemplate.exchange(
+            keycloakUrl+"/users",
+            HttpMethod.POST,
+            userRequest,
+            String.class
+    );
+
+
+
+    if (!userResponse.getStatusCode().is2xxSuccessful()) {
+        return ResponseEntity.status(userResponse.getStatusCode()).body("Failed to create user");
+    }
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }
@@ -218,10 +226,11 @@ public class IamService {
 //                addUserResourceRole(resRoleType.getRole(), newUsername, resource, baseResource.getId());
 //            }
 //        }
-        return  ResponseEntity.ok("User created successfully");
+    return  ResponseEntity.ok("User created successfully");
 
 
-    }
+}
+
 
 
 
@@ -354,115 +363,228 @@ public class IamService {
             return ResponseEntity.ok("Role '" + roleName + "' assigned successfully to user '" + userName + "'");
         }
 
-    public ResponseEntity<?> addUserRoleMapping(String roleName, String userName) {
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+//    public ResponseEntity<?> addUserRoleMapping(String roleName, String userName) {
+//        RestTemplate restTemplate = new RestTemplate();
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+//
+//        // 🔹 Step 1: Get Admin Access Token
+//        MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
+//        tokenRequestBody.add("grant_type", "client_credentials");
+//        tokenRequestBody.add("client_id", clientId);
+//        tokenRequestBody.add("client_secret", clientSecret);
+//
+//        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
+//        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+//                keycloakTokenUrl,
+//                HttpMethod.POST,
+//                tokenRequest,
+//                Map.class
+//        );
+//
+//        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
+//        }
+//
+//        String accessToken = (String) tokenResponse.getBody().get("access_token");
+//
+//        // 🔹 Step 2: Get User ID
+//        HttpHeaders authHeaders = new HttpHeaders();
+//        authHeaders.setBearerAuth(accessToken);
+//        HttpEntity<Void> userRequest = new HttpEntity<>(authHeaders);
+//
+//        ResponseEntity<List> userResponse = restTemplate.exchange(
+//                keycloakUrl+"/users?username=" + userName,
+//                HttpMethod.GET,
+//                userRequest,
+//                List.class
+//        );
+//
+//
+//
+//        if (userResponse.getBody().isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+//        }
+//
+//        String userId = ((Map<String, Object>) userResponse.getBody().get(0)).get("id").toString();
+//
+//        String raspUserId=null;
+//        List<Map<String, Object>> users = userResponse.getBody();
+//        Map<String,Object> firstUser= users.get(0);
+//
+//        Map<String,Object> attributes= (Map<String, Object>) firstUser.get("attributes");
+//        if(attributes!=null && attributes.containsKey("custom_id")){
+//            List<String> raspUserIds= (List<String>) attributes.get("custom_id");
+//            raspUserId=raspUserIds!=null && !raspUserIds.isEmpty() ? raspUserIds.get(0) :null;
+//        }
+//
+//
+//        // 🔹 Step 3: Get Client ID
+//        ResponseEntity<List> clientResponse = restTemplate.exchange(
+//                keycloakUrl+"/clients?clientId=" + clientId,
+//                HttpMethod.GET,
+//                userRequest,
+//                List.class
+//        );
+//
+//        if (clientResponse.getBody().isEmpty()) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found");
+//        }
+//
+//        String clientUuid = ((Map<String, Object>) clientResponse.getBody().get(0)).get("id").toString();
+//
+//        // 🔹 Step 4: Get Client Role
+//        ResponseEntity<List> roleResponse = restTemplate.exchange(
+//                keycloakUrl+"/clients/" + clientUuid + "/roles",
+//                HttpMethod.GET,
+//                userRequest,
+//                List.class
+//        );
+//
+//        List<Map<String, Object>> roles = roleResponse.getBody();
+//        Map<String, Object> role = roles.stream()
+//                .filter(r -> roleName.equals(r.get("name")))
+//                .findFirst()
+//                .orElse(null);
+//
+//        if (role == null) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found");
+//
+////                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Role not found");
+//
+//            // return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Role not found");
+//        }
+//        // 🔹 Step 5: Assign Role (Content-Type must be JSON)
+//        HttpHeaders jsonHeaders = new HttpHeaders();
+//        jsonHeaders.setBearerAuth(accessToken);
+//        jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
+//
+//        // 🔹 Step 5: Assign Client Role to User
+//        HttpEntity<List<Map<String, Object>>> assignRoleRequest = new HttpEntity<>(List.of(role), jsonHeaders);
+//        ResponseEntity<String> assignRoleResponse = restTemplate.exchange(
+//                keycloakUrl+"/users/" + userId + "/role-mappings/clients/" + clientUuid,
+//                HttpMethod.POST,
+//                assignRoleRequest,
+//                String.class
+//        );
+//
+//        if (!assignRoleResponse.getStatusCode().is2xxSuccessful()) {
+//            return ResponseEntity.status(assignRoleResponse.getStatusCode()).body("Failed to assign role");
+//        }
+//
+//        return ResponseEntity.ok("Role '" + roleName + "' assigned successfully to user '" + userName + "'");
+//    }
+public ResponseEntity<?> addUserRoleMapping(Map<String,Object> map) {
+        String roleName= (String) map.get("role");
+        String userName=(String) map.get("userName");
+    RestTemplate restTemplate = new RestTemplate();
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        // 🔹 Step 1: Get Admin Access Token
-        MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
-        tokenRequestBody.add("grant_type", "client_credentials");
-        tokenRequestBody.add("client_id", clientId);
-        tokenRequestBody.add("client_secret", clientSecret);
+    // 🔹 Step 1: Get Admin Access Token
+    MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
+    tokenRequestBody.add("grant_type", "client_credentials");
+    tokenRequestBody.add("client_id", clientId);
+    tokenRequestBody.add("client_secret", clientSecret);
 
-        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
-        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
-                keycloakTokenUrl,
-                HttpMethod.POST,
-                tokenRequest,
-                Map.class
-        );
+    HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenRequestBody, headers);
+    ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+            keycloakTokenUrl,
+            HttpMethod.POST,
+            tokenRequest,
+            Map.class
+    );
 
-        if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
-        }
+    if (!tokenResponse.getStatusCode().is2xxSuccessful()) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Failed to get admin token");
+    }
 
-        String accessToken = (String) tokenResponse.getBody().get("access_token");
+    String accessToken = (String) tokenResponse.getBody().get("access_token");
 
-        // 🔹 Step 2: Get User ID
-        HttpHeaders authHeaders = new HttpHeaders();
-        authHeaders.setBearerAuth(accessToken);
-        HttpEntity<Void> userRequest = new HttpEntity<>(authHeaders);
+    // 🔹 Step 2: Get User ID
+    HttpHeaders authHeaders = new HttpHeaders();
+    authHeaders.setBearerAuth(accessToken);
+    HttpEntity<Void> userRequest = new HttpEntity<>(authHeaders);
 
-        ResponseEntity<List> userResponse = restTemplate.exchange(
-                keycloakUrl+"/users?username=" + userName,
-                HttpMethod.GET,
-                userRequest,
-                List.class
-        );
-
-
-
-        if (userResponse.getBody().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-        }
-
-        String userId = ((Map<String, Object>) userResponse.getBody().get(0)).get("id").toString();
-
-        String raspUserId=null;
-        List<Map<String, Object>> users = userResponse.getBody();
-        Map<String,Object> firstUser= users.get(0);
-
-        Map<String,Object> attributes= (Map<String, Object>) firstUser.get("attributes");
-        if(attributes!=null && attributes.containsKey("custom_id")){
-            List<String> raspUserIds= (List<String>) attributes.get("custom_id");
-            raspUserId=raspUserIds!=null && !raspUserIds.isEmpty() ? raspUserIds.get(0) :null;
-        }
+    ResponseEntity<List> userResponse = restTemplate.exchange(
+            keycloakUrl+"/users?username=" + userName,
+            HttpMethod.GET,
+            userRequest,
+            List.class
+    );
 
 
-        // 🔹 Step 3: Get Client ID
-        ResponseEntity<List> clientResponse = restTemplate.exchange(
-                keycloakUrl+"/clients?clientId=" + clientId,
-                HttpMethod.GET,
-                userRequest,
-                List.class
-        );
 
-        if (clientResponse.getBody().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found");
-        }
+    if (userResponse.getBody().isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+    }
 
-        String clientUuid = ((Map<String, Object>) clientResponse.getBody().get(0)).get("id").toString();
+    String userId = ((Map<String, Object>) userResponse.getBody().get(0)).get("id").toString();
 
-        // 🔹 Step 4: Get Client Role
-        ResponseEntity<List> roleResponse = restTemplate.exchange(
-                keycloakUrl+"/clients/" + clientUuid + "/roles",
-                HttpMethod.GET,
-                userRequest,
-                List.class
-        );
+    String raspUserId=null;
+    List<Map<String, Object>> users = userResponse.getBody();
+    Map<String,Object> firstUser= users.get(0);
 
-        List<Map<String, Object>> roles = roleResponse.getBody();
-        Map<String, Object> role = roles.stream()
-                .filter(r -> roleName.equals(r.get("name")))
-                .findFirst()
-                .orElse(null);
+    Map<String,Object> attributes= (Map<String, Object>) firstUser.get("attributes");
+    if(attributes!=null && attributes.containsKey("custom_id")){
+        List<String> raspUserIds= (List<String>) attributes.get("custom_id");
+        raspUserId=raspUserIds!=null && !raspUserIds.isEmpty() ? raspUserIds.get(0) :null;
+    }
 
-        if (role == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found");
+
+    // 🔹 Step 3: Get Client ID
+    ResponseEntity<List> clientResponse = restTemplate.exchange(
+            keycloakUrl+"/clients?clientId=" + clientId,
+            HttpMethod.GET,
+            userRequest,
+            List.class
+    );
+
+    if (clientResponse.getBody().isEmpty()) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Client not found");
+    }
+
+    String clientUuid = ((Map<String, Object>) clientResponse.getBody().get(0)).get("id").toString();
+
+    // 🔹 Step 4: Get Client Role
+    ResponseEntity<List> roleResponse = restTemplate.exchange(
+            keycloakUrl+"/clients/" + clientUuid + "/roles",
+            HttpMethod.GET,
+            userRequest,
+            List.class
+    );
+
+    List<Map<String, Object>> roles = roleResponse.getBody();
+    Map<String, Object> role = roles.stream()
+            .filter(r -> roleName.equals(r.get("name")))
+            .findFirst()
+            .orElse(null);
+
+    if (role == null) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found");
 
 //                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Role not found");
 
-            // return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Role not found");
-        }
-        // 🔹 Step 5: Assign Role (Content-Type must be JSON)
-        HttpHeaders jsonHeaders = new HttpHeaders();
-        jsonHeaders.setBearerAuth(accessToken);
-        jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
-
-        // 🔹 Step 5: Assign Client Role to User
-        HttpEntity<List<Map<String, Object>>> assignRoleRequest = new HttpEntity<>(List.of(role), jsonHeaders);
-        ResponseEntity<String> assignRoleResponse = restTemplate.exchange(
-                keycloakUrl+"/users/" + userId + "/role-mappings/clients/" + clientUuid,
-                HttpMethod.POST,
-                assignRoleRequest,
-                String.class
-        );
-
-        if (!assignRoleResponse.getStatusCode().is2xxSuccessful()) {
-            return ResponseEntity.status(assignRoleResponse.getStatusCode()).body("Failed to assign role");
-        }
-
-        return ResponseEntity.ok("Role '" + roleName + "' assigned successfully to user '" + userName + "'");
+        // return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Role not found");
     }
+    // 🔹 Step 5: Assign Role (Content-Type must be JSON)
+    HttpHeaders jsonHeaders = new HttpHeaders();
+    jsonHeaders.setBearerAuth(accessToken);
+    jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+    // 🔹 Step 5: Assign Client Role to User
+    HttpEntity<List<Map<String, Object>>> assignRoleRequest = new HttpEntity<>(List.of(role), jsonHeaders);
+    ResponseEntity<String> assignRoleResponse = restTemplate.exchange(
+            keycloakUrl+"/users/" + userId + "/role-mappings/clients/" + clientUuid,
+            HttpMethod.POST,
+            assignRoleRequest,
+            String.class
+    );
+
+    if (!assignRoleResponse.getStatusCode().is2xxSuccessful()) {
+        return ResponseEntity.status(assignRoleResponse.getStatusCode()).body("Failed to assign role");
+    }
+
+    return ResponseEntity.ok("Role '" + roleName + "' assigned successfully to user '" + userName + "'");
+}
 }

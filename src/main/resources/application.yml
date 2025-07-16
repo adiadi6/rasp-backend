@@ -52,8 +52,8 @@ clientId: "adi-rest-api"
 clientSecret: "zSlPbz315NKBrAaixfTEFHP08DVyNMfh" # Replace with your actual secret
 keycloakTokenUrl: "http://localhost:8080/realms/new/protocol/openid-connect/token"
 keycloakUrl: "http://localhost:8080/admin/realms/new"
-ResourcePack: "com.example.demo.resource"
-HelperPack: "com.example.demo.helper"
+ResourcePack: "com.rasp.app.resource"
+HelperPack: "com.rasp.app.helper"
 
 
 
