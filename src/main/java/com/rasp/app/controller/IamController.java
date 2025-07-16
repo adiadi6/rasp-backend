@@ -1,5 +1,6 @@
 package com.rasp.app.controller;
 
+import com.rasp.app.resource.UserResource;
 import com.rasp.app.service.IamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -20,16 +21,11 @@ public class IamController {
         return iamService.addClientRole(roleName);
     }
 
+
     @PostMapping("/add_user")
-    public ResponseEntity<?> registerUser(@RequestParam String newUsername,
-                                               @RequestParam String newPassword,
-                                               @RequestParam String newFirstName,
-                                               @RequestParam String newLastName,
-                                               @RequestParam String newEmail,
+    public ResponseEntity<?> registerUser(@RequestBody UserResource userResource) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ApplicationException {
 
-                                               @RequestParam String resource,@RequestBody Map<String,Object> map) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException, ApplicationException {
-
-        return iamService.addUser(newUsername,newPassword,newFirstName,newLastName,newEmail,resource,map);
+        return iamService.addUser(userResource);
 
     }
 
@@ -37,10 +33,14 @@ public class IamController {
 //    public ResponseEntity<?> userResourceRole(@RequestParam String role,@RequestParam String userName,@RequestParam String resourceType,@RequestParam String resourceId){
 //        return iamService.addUserResourceRole(role,userName,resourceType,resourceId);
 //    }
-    @PostMapping("/user_role_mapping")
-    public ResponseEntity<?> userRoleMapping(@RequestParam String role,@RequestParam String userName){
-        return iamService.addUserRoleMapping(role,userName);
-    }
+//    @PostMapping("/user_role_mapping")
+//    public ResponseEntity<?> userRoleMapping(@RequestParam String role,@RequestParam String userName){
+//        return iamService.addUserRoleMapping(role,userName);
+//    }
+@PostMapping("/user_role_mapping")
+public ResponseEntity<?> userRoleMapping(@RequestBody Map<String,Object> map){
+    return iamService.addUserRoleMapping(map);
+}
 
 
 
